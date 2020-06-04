@@ -7,7 +7,7 @@
 typedef struct CharAndInt {
 	unsigned char ch;
 	int count;
-}CharAndInt;
+} CharAndInt;
 
 typedef struct Tree {
 	unsigned char value;
@@ -27,7 +27,7 @@ typedef Node* PNode;
 
 typedef struct CodeChar {
 	unsigned char code[256][32];
-	CharAndInt CodedTree[1024];
+	CharAndInt codedTree[1024];
 	int size;
 } CodeChar;
 
@@ -74,7 +74,9 @@ void DeleteTree(PTree tree) {
 
 PTree CreateTree(char value, PTree left, PTree right) {
 	PTree newTree = malloc(sizeof(Tree));
-	if (!newTree) abort();
+	if (!newTree) {
+		abort();
+	}
 	newTree->value = value;
 	newTree->left = left;
 	newTree->right = right;
@@ -92,7 +94,9 @@ void DeleteTreeChar(PTree tree) {
 
 PNode Push(PTree value, int count, PNode head) {
 	PNode newNode = malloc(sizeof(Node));
-	if (!newNode) abort();
+	if (!newNode) {
+		abort();
+	}
 	newNode->count = count;
 	newNode->next = head;
 	newNode->value = value;
@@ -109,8 +113,7 @@ PNode SortedPush(PTree value, int count, PNode head) {
 	}
 	if (itterator->count < count) {
 		itterator->next = Push(value, count, itterator->next);
-	}
-	else {
+	} else {
 		PTree savedTree = itterator->value;
 		itterator->value = value;
 		itterator->next = Push(savedTree, count, itterator->next);
@@ -136,15 +139,15 @@ void Swap(CharAndInt* first, CharAndInt* second) {
 void FillCodeList(CodeChar* code, PTree tree, unsigned char* path, int height) {
 	if (tree->left == NULL && tree->right == NULL) {
 		path[height] = 0;
-		code->CodedTree[code->size].count = 0;
-		code->CodedTree[code->size++].ch = 1;
-		code->CodedTree[code->size].count = 1;
-		code->CodedTree[code->size++].ch = tree->value;
+		code->codedTree[code->size].count = 0;
+		code->codedTree[code->size++].ch = 1;
+		code->codedTree[code->size].count = 1;
+		code->codedTree[code->size++].ch = tree->value;
 		strcpy((char*)code->code[(int)tree->value], (char*)path);
 		return;
 	}
-	code->CodedTree[code->size].count = 0;
-	code->CodedTree[code->size++].ch = 0;
+	code->codedTree[code->size].count = 0;
+	code->codedTree[code->size++].ch = 0;
 	path[height] = '1';
 	FillCodeList(code, tree->left, path, height + 1);
 	path[height] = '0';
@@ -154,23 +157,20 @@ void FillCodeList(CodeChar* code, PTree tree, unsigned char* path, int height) {
 void GetCode(CodeChar* result, const char* input) {
 	FILE* inFile = fopen(input, "rb");
 	fseek(inFile, 3, SEEK_SET);
-	CharAndInt countOfChar[256];
-	for (int i = 0; i < 256; ++i) {
-		countOfChar[i].ch = 0;
-		countOfChar[i].count = 0;
-	}
+	char countOfChar[256] = { 0 };
 	while (1) {
 		unsigned char readenChar = fgetc(inFile);
-		if (feof(inFile)) break;
-		countOfChar[readenChar].count++;
-		countOfChar[readenChar].ch = readenChar;
+		if (feof(inFile)) {
+			break;
+		}
+		countOfChar[readenChar]++;
 
 	}
 	PNode ListToCreateTree = NULL;
 	for (int i = 0; i < 256; ++i) {
-		if (countOfChar[i].count != 0) {
-			PTree newTree = CreateTree(countOfChar[i].ch, NULL, NULL);
-			ListToCreateTree = SortedPush(newTree, countOfChar[i].count, ListToCreateTree);
+		if (countOfChar[i] != 0) {
+			PTree newTree = CreateTree(i, NULL, NULL);
+			ListToCreateTree = SortedPush(newTree, countOfChar[i], ListToCreateTree);
 		}
 	}
 	if (ListToCreateTree) {
@@ -221,11 +221,10 @@ void Zip(const char* input, const char* output) {
 			WriteBit(0, &writer);
 		}
 		for (int i = 0; i < code.size; ++i) {
-			if (code.CodedTree[i].count == 0) {
-				WriteBit(code.CodedTree[i].ch, &writer);
-			}
-			else {
-				WriteChar(code.CodedTree[i].ch, &writer);
+			if (code.codedTree[i].count == 0) {
+				WriteBit(code.codedTree[i].ch, &writer);
+			} else {
+				WriteChar(code.codedTree[i].ch, &writer);
 			}
 		}
 		while (1) {
@@ -251,11 +250,10 @@ void Zip(const char* input, const char* output) {
 			WriteBit((((count >> i)& (unsigned char)1)), &writer);
 		}
 		for (int i = 0; i < code.size; ++i) {
-			if (code.CodedTree[i].count == 0) {
-				WriteBit(code.CodedTree[i].ch, &writer);
-			}
-			else {
-				WriteChar(code.CodedTree[i].ch, &writer);
+			if (code.codedTree[i].count == 0) {
+				WriteBit(code.codedTree[i].ch, &writer);
+			} else {
+				WriteChar(code.codedTree[i].ch, &writer);
 			}
 		}
 		fclose(inFile);
@@ -279,8 +277,7 @@ PTree BuildTree(BitReader* reader) {
 	if (!bit) {
 		tree->left = BuildTree(reader);
 		tree->right = BuildTree(reader);
-	}
-	else {
+	} else {
 		unsigned char codeChar = 0;
 		for (int i = 0; i < 8; ++i) {
 			unsigned char mask = (unsigned char)GetBit(reader) << i;
@@ -320,8 +317,7 @@ void UnZip(const char* input, const char* output) {
 	long long int endPosition = ftell(reader.input);
 	if (reader.endBits) {
 		reader.endBits += (endPosition - 4) * 8;
-	}
-	else {
+	} else {
 		reader.endBits += (endPosition - 3) * 8;
 	}
 	fseek(reader.input, position, SEEK_SET);
@@ -334,11 +330,9 @@ void UnZip(const char* input, const char* output) {
 			fprintf(out, "%c", treeItter->value);
 			treeItter = codeTree;
 			continue;
-		}
-		else if (bit) {
+		} else if (bit) {
 			treeItter = treeItter->left;
-		}
-		else {
+		} else {
 			treeItter = treeItter->right;
 		}
 		if (treeItter->left == NULL && treeItter->right == NULL) {
