@@ -44,10 +44,10 @@ typedef struct BitReader {
 	long long int endBits;
 } BitReader;
 
-void WriteBite(char bit, BitWriter* writer) {
+void WriteBit(char bit, BitWriter* writer) {
 	unsigned char bitPosition = 128;
 	bitPosition >>= (writer->writePosition % 8);
-	bitPosition = (bit - '0') ? bitPosition : 0;
+	bitPosition = bit ? bitPosition : 0;
 	writer->buffer |= bitPosition;
 	++writer->writePosition;
 	if (!(writer->writePosition % 8)) {
@@ -59,7 +59,7 @@ void WriteBite(char bit, BitWriter* writer) {
 void WriteChar(unsigned char ch, BitWriter* writer) {
 	unsigned char i = 1;
 	while (i) {
-		WriteBite(((ch & i) ? '1' : '0'), writer);
+		WriteBit(((ch & i) ? 1 : 0), writer);
 		i <<= 1;
 	}
 }
@@ -218,11 +218,11 @@ void Zip(const char* input, const char* output) {
 		writer.writePosition = 0;
 		fseek(inFile, 3, SEEK_SET);
 		for (int i = 0; i < 3; ++i) {
-			WriteBite('0', &writer);
+			WriteBit(0, &writer);
 		}
 		for (int i = 0; i < code.size; ++i) {
 			if (code.CodedTree[i].count == 0) {
-				WriteBite(code.CodedTree[i].ch + '0', &writer);
+				WriteBit(code.CodedTree[i].ch, &writer);
 			}
 			else {
 				WriteChar(code.CodedTree[i].ch, &writer);
@@ -234,7 +234,7 @@ void Zip(const char* input, const char* output) {
 				break;
 			}
 			for (int i = 0; i < (int)strlen((char*)code.code[readenChar]); ++i) {
-				WriteBite(code.code[readenChar][i], &writer);
+				WriteBit(code.code[readenChar][i] - '0', &writer);
 			}
 		}
 		if (writer.writePosition % 8 != 0) {
@@ -248,11 +248,11 @@ void Zip(const char* input, const char* output) {
 		writer.buffer = 0;
 		writer.writePosition = 0;
 		for (int i = 0; i < 3; ++i) {
-			WriteBite((((count >> i)& (unsigned char)1) + '0'), &writer);
+			WriteBit((((count >> i)& (unsigned char)1)), &writer);
 		}
 		for (int i = 0; i < code.size; ++i) {
 			if (code.CodedTree[i].count == 0) {
-				WriteBite(code.CodedTree[i].ch + '0', &writer);
+				WriteBit(code.CodedTree[i].ch, &writer);
 			}
 			else {
 				WriteChar(code.CodedTree[i].ch, &writer);
