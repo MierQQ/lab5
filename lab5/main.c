@@ -130,12 +130,6 @@ PTree Pop(PNode* head, int* count) {
 	return savedTree;
 }
 
-void Swap(CharAndInt* first, CharAndInt* second) {
-	CharAndInt savedValue = *first;
-	*first = *second;
-	*second = savedValue;
-}
-
 void FillCodeList(CodeChar* code, PTree tree, unsigned char* path, int height) {
 	if (tree->left == NULL && tree->right == NULL) {
 		path[height] = 0;
@@ -157,7 +151,7 @@ void FillCodeList(CodeChar* code, PTree tree, unsigned char* path, int height) {
 void GetCode(CodeChar* result, const char* input) {
 	FILE* inFile = fopen(input, "rb");
 	fseek(inFile, 3, SEEK_SET);
-	char countOfChar[256] = { 0 };
+	int countOfChar[256] = { 0 };
 	while (1) {
 		unsigned char readenChar = fgetc(inFile);
 		if (feof(inFile)) {
