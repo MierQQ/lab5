@@ -189,6 +189,15 @@ void GetCode(CodeChar* result, const char* input) {
 	fclose(inFile);
 }
 
+void FlushBits(BitWriter* writer) {
+	if (writer->writePosition % 8 != 0) {
+		if (!writer->buffer) {
+			writer->buffer = 1;
+		}
+		fwrite(&writer->buffer, 1, 1, writer->output);
+	}
+}
+
 void Zip(const char* input, const char* output) {
 	CodeChar code;
 	code.size = 0;
@@ -230,18 +239,13 @@ void Zip(const char* input, const char* output) {
 				WriteBit(code.code[readenChar][i] - 1, &writer);
 			}
 		}
-		if (writer.writePosition % 8 != 0) {
-			if (!writer.buffer) {
-				writer.buffer = 1;
-			}
-			fwrite(&writer.buffer, 1, 1, writer.output);
-		}
+		FlushBits(&writer);
 		fseek(writer.output, 0, SEEK_SET);
 		unsigned char count = writer.writePosition % 8;
 		writer.buffer = 0;
 		writer.writePosition = 0;
 		for (int i = 0; i < 3; ++i) {
-			WriteBit((((count >> i)& (unsigned char)1)), &writer);
+			WriteBit(((count >> i)& (unsigned char)1), &writer);
 		}
 		for (int i = 0; i < code.size; ++i) {
 			if (code.codedTree[i].type == 0) {
@@ -283,10 +287,7 @@ PTree BuildTree(BitReader* reader) {
 }
 
 int IsEndOfBit(BitReader reader) {
-	if (reader.position >= reader.endBits) {
-		return 1;
-	}
-	return 0;
+	return reader.position >= reader.endBits;
 }
 
 void UnZip(const char* input, const char* output) {
